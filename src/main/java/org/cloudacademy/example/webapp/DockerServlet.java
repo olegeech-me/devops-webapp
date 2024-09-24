@@ -81,12 +81,6 @@ public class DockerServlet extends HttpServlet {
             // Code smell: unused variable (SonarQube will flag this)
             int unusedVariable = 42;  // Noncompliant: Unused variable
 
-            // Bad loop condition (to trigger a SonarQube code smell or bug)
-            int j = 0;
-            for (int i = 0; i < 10; j++) {  // Noncompliant
-                i++;
-            }
-
         } catch (Exception e){  // Noncompliant: Catching generic Exception
             logger.error("docker problem: " + e.getMessage());
             containerId = "unknown";
