@@ -56,6 +56,12 @@ public class DockerServlet extends HttpServlet {
                 }
             }
 
+            // do bullshit to trigger sonarqube
+            for (i = 0; i < 10; j++) {  // Noncompliant
+                // ...
+                i++;
+            }
+
             // get the docker client
             DockerClient client = DockerClientBuilder.getInstance(config).build();
             // prepare command to retrieve the list of (running) containers
