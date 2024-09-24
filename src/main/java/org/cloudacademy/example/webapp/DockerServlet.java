@@ -1,14 +1,13 @@
 package org.cloudacademy.example.webapp;
 
 import java.io.IOException;
+import java.io.File;  // Import needed for File handling
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-//import org.apache.commons.logging.Log;
-//import org.apache.commons.logging.LogFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -29,11 +28,7 @@ public class DockerServlet extends HttpServlet {
     final static String CONTAINER_NETWORK_NAME = System.getenv("CONTAINER_NETWORK");
     final static String CONTAINER_SOCAT_ENABLED = System.getenv("CONTAINER_SOCAT_ENABLED");
 
-    // final static Log logger = LogFactory.getLog(DockerServlet.class);
-
     private static Logger logger = LogManager.getLogger(DockerServlet.class);
-    // final static Logger logger = LogManager.getLogger("CONSOLE_JSON_APPENDER");
-    // logger.debug("Debug message");
 
     private static DockerClientConfig config = null;
 
@@ -44,14 +39,8 @@ public class DockerServlet extends HttpServlet {
         try {
             if(config == null){
                 if ((CONTAINER_SOCAT_ENABLED != null) && (CONTAINER_SOCAT_ENABLED.equals("true"))){
-                    //using socat to connect to docker api server:
-                    //docker run --net network123 -e CONTAINER_NETWORK=network123 -e CONTAINER_SOCAT_ENABLED=true --name webapp --rm -p 8000:8080 cloudacademydevops/webapp:latest
-                    //needs to be used on macos as /run/docker.sock is not exposed
                     config = DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost("tcp://socat:2375").build();
-                }
-                else{
-                    //using unix socket /run/docker.sock:
-                    //docker run -v /run/docker.sock:/run/docker.sock --net network123 -e CONTAINER_NETWORK=network123 --name webapp --rm -p 8000:8080 cloudacademydevops/webapp:latest
+                } else {
                     config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
                 }
             }
@@ -60,14 +49,10 @@ public class DockerServlet extends HttpServlet {
             String username = "admin";  // Noncompliant: Hardcoded username
             String password = "password123";  // Noncompliant: Hardcoded password
 
-
             // get the docker client
             DockerClient client = DockerClientBuilder.getInstance(config).build();
             // prepare command to retrieve the list of (running) containers
-
             ListContainersCmd listContainersCmd = client.listContainersCmd().withStatusFilter(Collections.singleton("running"));
-
-            // and set the generic filter regarding name
             listContainersCmd.getFilters().put("name", Arrays.asList("webapp"));
             // finally, run the command
             List<Container> containerList = listContainersCmd.exec();
@@ -75,12 +60,17 @@ public class DockerServlet extends HttpServlet {
             Iterator<Container> containerIterator = containerList.iterator();
             while (containerIterator.hasNext()) {
                 Container container = containerIterator.next();
-    
                 containerId = container.getId().substring(0, 10);
                 containerIp = container.getNetworkSettings().getNetworks().get(CONTAINER_NETWORK_NAME).getIpAddress();
             }
-        }
-        catch (Exception e){
+
+            // Introducing problematic snippet (SonarQube will flag this)
+            File tempDir;
+            tempDir = File.createTempFile("", ".");  // Creates a temporary file
+            tempDir.delete();  // Deletes the temp file
+            tempDir.mkdir();  // Noncompliant: Attempts to make a directory from a deleted temp file
+
+        } catch (Exception e){
             logger.error("docker problem:" + e.getMessage());
             containerId = "unknown";
             containerIp = "unknown";
