@@ -57,7 +57,8 @@ public class DockerServlet extends HttpServlet {
             }
 
             // do bullshit to trigger sonarqube
-            for (i = 0; i < 10; j++) {  // Noncompliant
+            int j = 0;
+            for (int i = 0; i < 10; j++) {  // Noncompliant
                 // ...
                 i++;
             }
