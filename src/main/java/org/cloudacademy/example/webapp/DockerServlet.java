@@ -24,11 +24,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Collections;
 
-// Hardcoded credentials (this is a common vulnerability)
-String username = "admin";
-String password = "password123";  // Noncompliant: Hardcoded password
-
-
 @WebServlet(name = "DockerServlet", urlPatterns = { "/home", "/action1", "/action2", "/action3" }, loadOnStartup = 1)
 public class DockerServlet extends HttpServlet {
     final static String CONTAINER_NETWORK_NAME = System.getenv("CONTAINER_NETWORK");
@@ -61,9 +56,12 @@ public class DockerServlet extends HttpServlet {
                 }
             }
 
-            // get the docker client
+            // Hardcoded credentials (this will trigger a SonarQube vulnerability alert)
+            String username = "admin";  // Noncompliant: Hardcoded username
+            String password = "password123";  // Noncompliant: Hardcoded password
+
+            // Unclosed resource: DockerClient
             DockerClient client = DockerClientBuilder.getInstance(config).build();
-            // prepare command to retrieve the list of (running) containers
 
             ListContainersCmd listContainersCmd = client.listContainersCmd().withStatusFilter(Collections.singleton("running"));
 
@@ -75,24 +73,27 @@ public class DockerServlet extends HttpServlet {
             Iterator<Container> containerIterator = containerList.iterator();
             while (containerIterator.hasNext()) {
                 Container container = containerIterator.next();
-    
+
                 containerId = container.getId().substring(0, 10);
                 containerIp = container.getNetworkSettings().getNetworks().get(CONTAINER_NETWORK_NAME).getIpAddress();
             }
-        }
-        catch (Exception e){
-            logger.error("docker problem:" + e.getMessage());
+
+            // Code smell: unused variable (SonarQube will flag this)
+            int unusedVariable = 42;  // Noncompliant: Unused variable
+
+            // Bad loop condition (to trigger a SonarQube code smell or bug)
+            int j = 0;
+            for (int i = 0; i < 10; j++) {  // Noncompliant
+                i++;
+            }
+
+        } catch (Exception e){  // Noncompliant: Catching generic Exception
+            logger.error("docker problem: " + e.getMessage());
             containerId = "unknown";
             containerIp = "unknown";
+        } finally {
+            // Empty finally block (SonarQube will flag this as a code smell)
         }
-
-        try {
-            // Some code
-            logger.debug("Debug message");
-        } catch (IOException e) {
-        // Do nothing (empty catch block) - Noncompliant
-        }
-
 
         request.setAttribute("containerid", containerId);
         request.setAttribute("containerip", containerIp);
