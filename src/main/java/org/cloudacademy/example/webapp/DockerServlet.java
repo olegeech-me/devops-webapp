@@ -60,8 +60,10 @@ public class DockerServlet extends HttpServlet {
             String username = "admin";  // Noncompliant: Hardcoded username
             String password = "password123";  // Noncompliant: Hardcoded password
 
-            // Unclosed resource: DockerClient
+
+            // get the docker client
             DockerClient client = DockerClientBuilder.getInstance(config).build();
+            // prepare command to retrieve the list of (running) containers
 
             ListContainersCmd listContainersCmd = client.listContainersCmd().withStatusFilter(Collections.singleton("running"));
 
@@ -73,20 +75,15 @@ public class DockerServlet extends HttpServlet {
             Iterator<Container> containerIterator = containerList.iterator();
             while (containerIterator.hasNext()) {
                 Container container = containerIterator.next();
-
+    
                 containerId = container.getId().substring(0, 10);
                 containerIp = container.getNetworkSettings().getNetworks().get(CONTAINER_NETWORK_NAME).getIpAddress();
             }
-
-            // Code smell: unused variable (SonarQube will flag this)
-            int unusedVariable = 42;  // Noncompliant: Unused variable
-
-        } catch (Exception e){  // Noncompliant: Catching generic Exception
-            logger.error("docker problem: " + e.getMessage());
+        }
+        catch (Exception e){
+            logger.error("docker problem:" + e.getMessage());
             containerId = "unknown";
             containerIp = "unknown";
-        } finally {
-            // Empty finally block (SonarQube will flag this as a code smell)
         }
 
         request.setAttribute("containerid", containerId);
