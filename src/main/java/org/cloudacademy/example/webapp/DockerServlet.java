@@ -24,6 +24,11 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Collections;
 
+// Hardcoded credentials (this is a common vulnerability)
+String username = "admin";
+String password = "password123";  // Noncompliant: Hardcoded password
+
+
 @WebServlet(name = "DockerServlet", urlPatterns = { "/home", "/action1", "/action2", "/action3" }, loadOnStartup = 1)
 public class DockerServlet extends HttpServlet {
     final static String CONTAINER_NETWORK_NAME = System.getenv("CONTAINER_NETWORK");
@@ -56,13 +61,6 @@ public class DockerServlet extends HttpServlet {
                 }
             }
 
-            // do bullshit to trigger sonarqube
-            int j = 0;
-            for (int i = 0; i < 10; j++) {  // Noncompliant
-                // ...
-                i++;
-            }
-
             // get the docker client
             DockerClient client = DockerClientBuilder.getInstance(config).build();
             // prepare command to retrieve the list of (running) containers
@@ -87,6 +85,14 @@ public class DockerServlet extends HttpServlet {
             containerId = "unknown";
             containerIp = "unknown";
         }
+
+        try {
+            // Some code
+            logger.debug("Debug message");
+        } catch (IOException e) {
+        // Do nothing (empty catch block) - Noncompliant
+        }
+
 
         request.setAttribute("containerid", containerId);
         request.setAttribute("containerip", containerIp);
